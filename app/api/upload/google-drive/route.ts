@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { google } from 'googleapis'
-
-// Google Drive OAuth2 setup
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-)
-
-oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-})
-
-const drive = google.drive({ version: 'v3', auth: oauth2Client })
+import { uploadToDrive, getDriveConfig, getStreamingUrl } from '@/lib/google-drive'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
     const fileName = formData.get('fileName') as string
+    const trackId = formData.get('trackId') as string | null
 
     if (!file) {
       return NextResponse.json(
@@ -27,11 +16,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if Google Drive credentials are configured
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_REFRESH_TOKEN) {
+    // Check if Google Drive is configured
+    const config = await getDriveConfig()
+    if (!config) {
       return NextResponse.json(
-        { message: 'Google Drive not configured' },
+        { message: 'Google Drive not configured. Please contact an administrator.' },
         { status: 503 }
+      )
+    }
+
+    // Validate file type for .wav files
+    const allowedTypes = ['audio/wav', 'audio/x-wav', 'audio/wave']
+    if (!allowedTypes.includes(file.type) && !file.name.toLowerCase().endsWith('.wav')) {
+      return NextResponse.json(
+        { message: 'Only .wav files are allowed' },
+        { status: 400 }
       )
     }
 
@@ -40,45 +39,54 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer)
 
     // Upload to Google Drive
-    const response = await drive.files.create({
-      requestBody: {
-        name: fileName || file.name,
-        mimeType: file.type,
-        parents: process.env.GOOGLE_DRIVE_FOLDER_ID 
-          ? [process.env.GOOGLE_DRIVE_FOLDER_ID] 
-          : undefined,
-      },
-      media: {
-        mimeType: file.type,
-        body: require('stream').Readable.from(buffer),
-      },
-      fields: 'id, webViewLink, webContentLink',
-    })
+    const result = await uploadToDrive(
+      buffer,
+      fileName || file.name,
+      file.type || 'audio/wav',
+      config.folderId
+    )
 
-    // Make file publicly accessible for streaming
-    await drive.permissions.create({
-      fileId: response.data.id!,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone',
-      },
-    })
+    if (!result) {
+      return NextResponse.json(
+        { message: 'Failed to upload to Google Drive' },
+        { status: 500 }
+      )
+    }
 
-    // Get updated file info with public links
-    const fileInfo = await drive.files.get({
-      fileId: response.data.id!,
-      fields: 'id, webViewLink, webContentLink',
-    })
+    // If trackId provided, update the track with Drive metadata
+    if (trackId) {
+      const supabase = await createClient()
+      await supabase
+        .from('tracks')
+        .update({
+          audio_url: getStreamingUrl(result.fileId),
+          drive_file_id: result.fileId,
+          drive_file_name: result.name,
+          drive_file_size: result.size,
+          drive_mime_type: result.mimeType,
+          drive_web_view_link: result.webViewLink,
+          drive_web_content_link: result.webContentLink,
+          drive_upload_status: 'completed',
+          drive_uploaded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', trackId)
+    }
 
     return NextResponse.json({
-      fileId: fileInfo.data.id,
-      webViewLink: fileInfo.data.webViewLink,
-      webContentLink: fileInfo.data.webContentLink,
+      success: true,
+      fileId: result.fileId,
+      name: result.name,
+      size: result.size,
+      mimeType: result.mimeType,
+      webViewLink: result.webViewLink,
+      webContentLink: result.webContentLink,
+      streamingUrl: getStreamingUrl(result.fileId),
     })
   } catch (error) {
     console.error('Google Drive upload error:', error)
     return NextResponse.json(
-      { message: 'Failed to upload to Google Drive' },
+      { message: error instanceof Error ? error.message : 'Failed to upload to Google Drive' },
       { status: 500 }
     )
   }

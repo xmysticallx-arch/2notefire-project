@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { User, Bell, Shield, CreditCard, Users, Save, Camera, Loader2, Upload, Settings } from 'lucide-react'
+import { User, Bell, Shield, CreditCard, Users, Save, Camera, Loader2, Upload, Settings, Cloud } from 'lucide-react'
 import type { Profile } from '@/lib/types'
 import Link from 'next/link'
 
@@ -230,6 +230,10 @@ export default function SettingsPage() {
               <TabsTrigger value="features" className="gap-2">
                 <Settings className="h-4 w-4" />
                 <span className="hidden sm:inline">Features</span>
+              </TabsTrigger>
+              <TabsTrigger value="drive" className="gap-2">
+                <Cloud className="h-4 w-4" />
+                <span className="hidden sm:inline">Drive</span>
               </TabsTrigger>
             </>
           )}
@@ -572,6 +576,34 @@ export default function SettingsPage() {
               <CardContent>
                 <p className="text-muted-foreground">
                   Configure which features are enabled and which roles can access them. Control sidebar menu visibility and feature access for admins, users, and artists.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Google Drive Tab (Admin Only) */}
+          <TabsContent value="drive" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Cloud className="h-5 w-5 text-primary" />
+                      Google Drive Integration
+                    </CardTitle>
+                    <CardDescription>Configure Google Drive for .wav track uploads and streaming</CardDescription>
+                  </div>
+                  <Button asChild>
+                    <Link href="/dashboard/settings/drive">
+                      <Cloud className="mr-2 h-4 w-4" />
+                      Configure Drive
+                    </Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Set up OAuth credentials, connect your Google Drive account, and configure the target folder for track uploads. All .wav files will be uploaded to Google Drive and streamed directly from there.
                 </p>
               </CardContent>
             </Card>

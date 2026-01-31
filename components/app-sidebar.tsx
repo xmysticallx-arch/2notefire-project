@@ -44,6 +44,7 @@ import {
   TrendingUp,
   Calculator,
   Shield,
+  Cloud,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -308,6 +309,12 @@ export function AppSidebar({ profile }: AppSidebarProps) {
                 {userRole === 'admin' && (
                   <>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/settings/drive" className="cursor-pointer">
+                        <Cloud className="mr-2 size-4" />
+                        Google Drive
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard/settings/features" className="cursor-pointer">
                         <Shield className="mr-2 size-4" />
