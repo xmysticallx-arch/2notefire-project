@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2, Upload, FileText, X } from "lucide-react"
 import Link from "next/link"
 import type { Artist } from "@/lib/types"
 
@@ -42,6 +42,7 @@ export default function NewContractPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [artists, setArtists] = useState<Artist[]>([])
+  const [contractFile, setContractFile] = useState<File | null>(null)
   const [formData, setFormData] = useState({
     title: "",
     artist_id: "",
@@ -66,6 +67,13 @@ export default function NewContractPage() {
     fetchArtists()
   }, [])
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setContractFile(file)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -74,11 +82,30 @@ export default function NewContractPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
+      let document_url = null
+
+      // Upload contract file if provided
+      if (contractFile) {
+        const fileExt = contractFile.name.split('.').pop()
+        const fileName = `contract-${Date.now()}.${fileExt}`
+        const { error: uploadError } = await supabase.storage
+          .from('contracts')
+          .upload(fileName, contractFile)
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('contracts')
+            .getPublicUrl(fileName)
+          document_url = publicUrl
+        }
+      }
+
       const { error } = await supabase.from("contracts").insert({
         ...formData,
         value: formData.value ? parseFloat(formData.value) : null,
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
+        document_url,
         created_by: user?.id,
       })
 
@@ -228,6 +255,47 @@ export default function NewContractPage() {
                 rows={3}
               />
             </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label>Contract Document</Label>
+              {contractFile ? (
+                <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-4">
+                  <FileText className="h-8 w-8 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-medium">{contractFile.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(contractFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setContractFile(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="contract_file"
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/50 bg-muted/30 p-8 transition-colors hover:border-primary/50 hover:bg-muted/50"
+                >
+                  <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                  <p className="text-sm font-medium">Click to upload contract document</p>
+                  <p className="text-xs text-muted-foreground">PDF, DOC, or DOCX (max 10MB)</p>
+                  <input
+                    id="contract_file"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              )}
+            </div>
+
             <div className="flex gap-4">
               <Button type="submit" disabled={loading} className="bg-primary text-primary-foreground hover:bg-primary/90">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
