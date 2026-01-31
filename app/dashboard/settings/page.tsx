@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { User, Bell, Shield, CreditCard, Users, Save, Camera, Loader2, Upload } from 'lucide-react'
+import { User, Bell, Shield, CreditCard, Users, Save, Camera, Loader2, Upload, Settings } from 'lucide-react'
 import type { Profile } from '@/lib/types'
 import Link from 'next/link'
 
@@ -221,13 +221,19 @@ export default function SettingsPage() {
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Billing</span>
           </TabsTrigger>
-          {isAdmin && (
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Users</span>
-            </TabsTrigger>
+{isAdmin && (
+            <>
+              <TabsTrigger value="users" className="gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="features" className="gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Features</span>
+              </TabsTrigger>
+            </>
           )}
-        </TabsList>
+          </TabsList>
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-4">
@@ -541,6 +547,31 @@ export default function SettingsPage() {
               <CardContent>
                 <p className="text-muted-foreground">
                   As an admin, you can add, edit, and remove users from the system. Click &quot;Manage Users&quot; to access the full user management interface.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Features Tab (Admin Only) */}
+          <TabsContent value="features" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Feature Settings</CardTitle>
+                    <CardDescription>Manage application features and sidebar visibility per role</CardDescription>
+                  </div>
+                  <Button asChild>
+                    <Link href="/dashboard/settings/features">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Manage Features
+                    </Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Configure which features are enabled and which roles can access them. Control sidebar menu visibility and feature access for admins, users, and artists.
                 </p>
               </CardContent>
             </Card>

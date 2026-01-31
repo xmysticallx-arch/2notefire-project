@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import {
   Sidebar,
@@ -24,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { 
   LayoutDashboard, 
   Users, 
@@ -40,6 +42,8 @@ import {
   ChevronUp,
   CreditCard,
   TrendingUp,
+  Calculator,
+  Shield,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -50,26 +54,35 @@ interface AppSidebarProps {
   profile: Profile | null
 }
 
-const mainNavItems = [
-  { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { title: 'Artists', icon: Users, href: '/dashboard/artists' },
-  { title: 'Releases', icon: Disc3, href: '/dashboard/releases' },
-  { title: 'Tracks', icon: Music, href: '/dashboard/tracks' },
+interface NavItem {
+  title: string
+  icon: React.ElementType
+  href: string
+  featureKey?: string
+  roles?: string[]
+}
+
+// Default nav items with role restrictions
+const mainNavItems: NavItem[] = [
+  { title: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', featureKey: 'dashboard', roles: ['admin', 'user', 'artist'] },
+  { title: 'Artists', icon: Users, href: '/dashboard/artists', featureKey: 'artists', roles: ['admin', 'user'] },
+  { title: 'Releases', icon: Disc3, href: '/dashboard/releases', featureKey: 'releases', roles: ['admin', 'user', 'artist'] },
+  { title: 'Tracks', icon: Music, href: '/dashboard/tracks', featureKey: 'tracks', roles: ['admin', 'user', 'artist'] },
 ]
 
-const financeNavItems = [
-  { title: 'Accounting', icon: DollarSign, href: '/dashboard/accounting' },
-  { title: 'Royalties', icon: CreditCard, href: '/dashboard/royalties' },
+const financeNavItems: NavItem[] = [
+  { title: 'Accounting', icon: Calculator, href: '/dashboard/accounting', featureKey: 'accounting', roles: ['admin'] },
+  { title: 'Royalties', icon: DollarSign, href: '/dashboard/royalties', featureKey: 'royalties', roles: ['admin', 'artist'] },
 ]
 
-const managementNavItems = [
-  { title: 'Analytics', icon: TrendingUp, href: '/dashboard/analytics' },
-  { title: 'Contracts', icon: FileText, href: '/dashboard/contracts' },
+const managementNavItems: NavItem[] = [
+  { title: 'Analytics', icon: TrendingUp, href: '/dashboard/analytics', featureKey: 'analytics', roles: ['admin', 'user'] },
+  { title: 'Contracts', icon: FileText, href: '/dashboard/contracts', featureKey: 'contracts', roles: ['admin'] },
 ]
 
-const systemNavItems = [
-  { title: 'Notifications', icon: Bell, href: '/dashboard/notifications' },
-  { title: 'Settings', icon: Settings, href: '/dashboard/settings' },
+const systemNavItems: NavItem[] = [
+  { title: 'Notifications', icon: Bell, href: '/dashboard/notifications', featureKey: 'notifications', roles: ['admin', 'user', 'artist'] },
+  { title: 'Settings', icon: Settings, href: '/dashboard/settings', featureKey: 'settings', roles: ['admin', 'user', 'artist'] },
 ]
 
 export function AppSidebar({ profile }: AppSidebarProps) {
@@ -77,6 +90,20 @@ export function AppSidebar({ profile }: AppSidebarProps) {
   const router = useRouter()
   const { state } = useSidebar()
   const isCollapsed = state === 'collapsed'
+  const userRole = profile?.role || 'user'
+
+  // Filter nav items based on user role
+  const filterByRole = (items: NavItem[]) => {
+    return items.filter(item => {
+      if (!item.roles) return true
+      return item.roles.includes(userRole)
+    })
+  }
+
+  const filteredMainNav = filterByRole(mainNavItems)
+  const filteredFinanceNav = filterByRole(financeNavItems)
+  const filteredManagementNav = filterByRole(managementNavItems)
+  const filteredSystemNav = filterByRole(systemNavItems)
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -121,7 +148,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
           <SidebarGroupLabel>Main</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
+              {filteredMainNav.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton 
                     asChild 
@@ -139,53 +166,59 @@ export function AppSidebar({ profile }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        {filteredFinanceNav.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Finance</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredFinanceNav.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton 
+                        asChild 
+                        isActive={pathname === item.href}
+                        tooltip={item.title}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className="size-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Finance</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {financeNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={pathname === item.href}
-                    tooltip={item.title}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {managementNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={pathname === item.href}
-                    tooltip={item.title}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {filteredManagementNav.length > 0 && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Management</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {filteredManagementNav.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton 
+                        asChild 
+                        isActive={pathname === item.href}
+                        tooltip={item.title}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className="size-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         <SidebarSeparator />
 
@@ -193,7 +226,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {systemNavItems.map((item) => (
+              {filteredSystemNav.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton 
                     asChild 
@@ -249,7 +282,12 @@ export function AppSidebar({ profile }: AppSidebarProps) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">{profile?.full_name || 'User'}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-semibold">{profile?.full_name || 'User'}</span>
+                        <Badge variant="secondary" className="text-[10px] capitalize px-1.5 py-0">
+                          {userRole}
+                        </Badge>
+                      </div>
                       <span className="truncate text-xs text-muted-foreground">{profile?.email}</span>
                     </div>
                   </div>
@@ -267,6 +305,23 @@ export function AppSidebar({ profile }: AppSidebarProps) {
                     Settings
                   </Link>
                 </DropdownMenuItem>
+                {userRole === 'admin' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/settings/features" className="cursor-pointer">
+                        <Shield className="mr-2 size-4" />
+                        Feature Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/settings/users" className="cursor-pointer">
+                        <Users className="mr-2 size-4" />
+                        User Management
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="mr-2 size-4" />

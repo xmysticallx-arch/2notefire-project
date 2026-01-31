@@ -41,6 +41,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { exportToExcel, exportToXLSX, exportToDocx, printData } from '@/lib/export-utils'
 
 interface Transaction {
   id: string
@@ -115,114 +116,55 @@ export default function AccountingPage() {
     }
   }
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'transaction_date' as const, label: 'Date' },
+    { key: 'description' as const, label: 'Description' },
+    { key: 'category' as const, label: 'Category' },
+    { key: 'artist_name' as const, label: 'Artist' },
+    { key: 'type' as const, label: 'Type' },
+    { key: 'status' as const, label: 'Status' },
+    { key: 'amount' as const, label: 'Amount' },
+  ]
+
+  // Prepare data for export
+  const getExportData = () => {
+    return filteredTransactions.map(t => ({
+      transaction_date: new Date(t.transaction_date).toLocaleDateString(),
+      description: t.description || '',
+      category: t.category,
+      artist_name: t.artist?.stage_name || t.artist?.name || '',
+      type: t.type,
+      status: t.status,
+      amount: `${t.type === 'income' ? '+' : '-'}$${Number(t.amount).toFixed(2)}`,
+    }))
+  }
+
   // Export to Excel (CSV)
-  const exportToExcel = () => {
+  const handleExportExcel = () => {
     setIsExporting(true)
     try {
-      const headers = ['Date', 'Description', 'Category', 'Artist', 'Type', 'Status', 'Amount']
-      const rows = filteredTransactions.map(t => [
-        new Date(t.transaction_date).toLocaleDateString(),
-        t.description || '',
-        t.category,
-        t.artist?.stage_name || t.artist?.name || '',
-        t.type,
-        t.status,
-        `${t.type === 'income' ? '+' : '-'}${Number(t.amount).toFixed(2)}`
-      ])
-
-      const csvContent = [headers, ...rows]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n')
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
-      link.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`
-      link.click()
+      exportToExcel(getExportData(), `transactions_${new Date().toISOString().split('T')[0]}`, exportColumns)
     } finally {
       setIsExporting(false)
     }
   }
 
-  // Export to PDF
-  const exportToPDF = async () => {
+  // Export to XLSX
+  const handleExportXLSX = async () => {
     setIsExporting(true)
     try {
-      // Create a printable HTML table
-      const printContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>2NoteFireRecord - Transactions Report</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #333; }
-            .summary { display: flex; gap: 40px; margin-bottom: 20px; }
-            .summary-item { text-align: center; }
-            .summary-value { font-size: 24px; font-weight: bold; }
-            .income { color: #22c55e; }
-            .expense { color: #ef4444; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-            th { background: #f5f5f5; }
-            .amount-income { color: #22c55e; }
-            .amount-expense { color: #ef4444; }
-            @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }
-          </style>
-        </head>
-        <body>
-          <h1>2NoteFireRecord - Transactions Report</h1>
-          <p>Generated on ${new Date().toLocaleDateString()}</p>
-          <div class="summary">
-            <div class="summary-item">
-              <div class="summary-value income">$${income.toLocaleString()}</div>
-              <div>Total Income</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-value expense">$${expenses.toLocaleString()}</div>
-              <div>Total Expenses</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-value ${balance >= 0 ? 'income' : 'expense'}">$${Math.abs(balance).toLocaleString()}</div>
-              <div>Net Balance</div>
-            </div>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Artist</th>
-                <th>Status</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredTransactions.map(t => `
-                <tr>
-                  <td>${new Date(t.transaction_date).toLocaleDateString()}</td>
-                  <td>${t.description || '-'}</td>
-                  <td>${t.category}</td>
-                  <td>${t.artist?.stage_name || t.artist?.name || '-'}</td>
-                  <td>${t.status}</td>
-                  <td class="${t.type === 'income' ? 'amount-income' : 'amount-expense'}">
-                    ${t.type === 'income' ? '+' : '-'}$${Number(t.amount).toLocaleString()}
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </body>
-        </html>
-      `
+      await exportToXLSX(getExportData(), `transactions_${new Date().toISOString().split('T')[0]}`, exportColumns)
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
-      const printWindow = window.open('', '_blank')
-      if (printWindow) {
-        printWindow.document.write(printContent)
-        printWindow.document.close()
-        printWindow.print()
-      }
+  // Export to Word (DOCX)
+  const handleExportDocx = () => {
+    setIsExporting(true)
+    try {
+      exportToDocx(getExportData(), `transactions_${new Date().toISOString().split('T')[0]}`, '2NoteFireRecord - Transactions Report', exportColumns)
     } finally {
       setIsExporting(false)
     }
@@ -230,7 +172,12 @@ export default function AccountingPage() {
 
   // Print view
   const handlePrint = () => {
-    exportToPDF() // Uses the same print logic
+    setIsExporting(true)
+    try {
+      printData(getExportData(), '2NoteFireRecord - Transactions Report', exportColumns)
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   if (isLoading) {
@@ -260,20 +207,24 @@ export default function AccountingPage() {
                 Export
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={exportToExcel}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Export to Excel (CSV)
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={exportToPDF}>
-                <FileText className="mr-2 h-4 w-4" />
-                Export to PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print
-              </DropdownMenuItem>
-            </DropdownMenuContent>
+<DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportExcel}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Export to Excel (CSV)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportXLSX}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Export to Excel (XLS)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportDocx}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export to Word (DOC)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handlePrint}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print / PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
           </DropdownMenu>
           <Button asChild>
             <Link href="/dashboard/accounting/new">

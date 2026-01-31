@@ -10,6 +10,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -30,6 +37,8 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const router = useRouter()
 
   const fetchNotifications = async () => {
@@ -120,9 +129,29 @@ export function NotificationBell() {
       await markAsRead(notification.id)
     }
     
-    if (notification.link) {
-      setIsOpen(false)
-      router.push(notification.link)
+    // Open modal to show full message
+    setSelectedNotification(notification)
+    setIsModalOpen(true)
+    setIsOpen(false)
+  }
+
+  const handleNavigateFromModal = () => {
+    if (selectedNotification?.link) {
+      setIsModalOpen(false)
+      router.push(selectedNotification.link)
+    }
+  }
+
+  const handleDeleteFromModal = async () => {
+    if (selectedNotification) {
+      const supabase = createClient()
+      await supabase.from('notifications').delete().eq('id', selectedNotification.id)
+      setNotifications((prev) => prev.filter((n) => n.id !== selectedNotification.id))
+      if (!selectedNotification.read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1))
+      }
+      setIsModalOpen(false)
+      setSelectedNotification(null)
     }
   }
 
@@ -140,6 +169,39 @@ export function NotificationBell() {
   }
 
   return (
+    <>
+    {/* Notification Detail Modal */}
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className={`h-2 w-2 rounded-full ${getNotificationIcon(selectedNotification?.type || 'info').split(' ')[0]}`} />
+            {selectedNotification?.title}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
+            {selectedNotification && formatDistanceToNow(new Date(selectedNotification.created_at), { addSuffix: true })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-foreground whitespace-pre-wrap">
+            {selectedNotification?.message}
+          </p>
+          <div className="flex gap-2">
+            {selectedNotification?.link && (
+              <Button onClick={handleNavigateFromModal} className="flex-1">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                View Details
+              </Button>
+            )}
+            <Button variant="destructive" onClick={handleDeleteFromModal}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
@@ -240,5 +302,6 @@ export function NotificationBell() {
         </div>
       </PopoverContent>
     </Popover>
+    </>
   )
 }
