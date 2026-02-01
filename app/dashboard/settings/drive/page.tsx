@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -48,6 +49,7 @@ export default function DriveSettingsPage() {
   const [isConnecting, setIsConnecting] = useState(false)
   const [driveStatus, setDriveStatus] = useState<DriveStatus>({ connected: false })
   const [showConnectDialog, setShowConnectDialog] = useState(false)
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   
   const [config, setConfig] = useState({
@@ -223,9 +225,11 @@ export default function DriveSettingsPage() {
       
       setConfig(prev => ({ ...prev, refreshToken: '' }))
       setDriveStatus({ connected: false })
+      setShowDisconnectDialog(false)
       setMessage({ type: 'success', text: 'Google Drive disconnected' })
     } catch (error) {
       console.error('Failed to disconnect:', error)
+      setShowDisconnectDialog(false)
       setMessage({ type: 'error', text: 'Failed to disconnect Google Drive' })
     }
   }
@@ -304,11 +308,14 @@ export default function DriveSettingsPage() {
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh Status
                 </Button>
-                <Button variant="outline" onClick={handleConnectDrive}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowConnectDialog(true)}
+                >
                   <Link2 className="mr-2 h-4 w-4" />
                   Switch Account
                 </Button>
-                <Dialog>
+                <Dialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
                   <DialogTrigger asChild>
                     <Button variant="destructive">
                       <Unlink className="mr-2 h-4 w-4" />
@@ -323,12 +330,14 @@ export default function DriveSettingsPage() {
                         tracks will remain accessible, but new uploads will fail.
                       </DialogDescription>
                     </DialogHeader>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline">Cancel</Button>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowDisconnectDialog(false)}>
+                        Cancel
+                      </Button>
                       <Button variant="destructive" onClick={handleDisconnect}>
                         Disconnect
                       </Button>
-                    </div>
+                    </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </>
