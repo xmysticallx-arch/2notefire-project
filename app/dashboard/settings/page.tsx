@@ -530,84 +530,86 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Users Tab (Admin Only) */}
         {isAdmin && (
-          <TabsContent value="users" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>User Management</CardTitle>
-                    <CardDescription>Manage users and their permissions</CardDescription>
+          <>
+            {/* Users Tab (Admin Only) */}
+            <TabsContent value="users" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>User Management</CardTitle>
+                      <CardDescription>Manage users and their permissions</CardDescription>
+                    </div>
+                    <Button asChild>
+                      <Link href="/dashboard/settings/users">
+                        <Users className="mr-2 h-4 w-4" />
+                        Manage Users
+                      </Link>
+                    </Button>
                   </div>
-                  <Button asChild>
-                    <Link href="/dashboard/settings/users">
-                      <Users className="mr-2 h-4 w-4" />
-                      Manage Users
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  As an admin, you can add, edit, and remove users from the system. Click &quot;Manage Users&quot; to access the full user management interface.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    As an admin, you can add, edit, and remove users from the system. Click &quot;Manage Users&quot; to access the full user management interface.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Features Tab (Admin Only) */}
-          <TabsContent value="features" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Feature Settings</CardTitle>
-                    <CardDescription>Manage application features and sidebar visibility per role</CardDescription>
+            {/* Features Tab (Admin Only) */}
+            <TabsContent value="features" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Feature Settings</CardTitle>
+                      <CardDescription>Manage application features and sidebar visibility per role</CardDescription>
+                    </div>
+                    <Button asChild>
+                      <Link href="/dashboard/settings/features">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Manage Features
+                      </Link>
+                    </Button>
                   </div>
-                  <Button asChild>
-                    <Link href="/dashboard/settings/features">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Manage Features
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Configure which features are enabled and which roles can access them. Control sidebar menu visibility and feature access for admins, users, and artists.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Configure which features are enabled and which roles can access them. Control sidebar menu visibility and feature access for admins, users, and artists.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Google Drive Tab (Admin Only) */}
-          <TabsContent value="drive" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Cloud className="h-5 w-5 text-primary" />
-                      Google Drive Integration
-                    </CardTitle>
-                    <CardDescription>Configure Google Drive for .wav track uploads and streaming</CardDescription>
+            {/* Google Drive Tab (Admin Only) */}
+            <TabsContent value="drive" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Cloud className="h-5 w-5 text-primary" />
+                        Google Drive Integration
+                      </CardTitle>
+                      <CardDescription>Configure Google Drive for .wav track uploads and streaming</CardDescription>
+                    </div>
+                    <Button asChild>
+                      <Link href="/dashboard/settings/drive">
+                        <Cloud className="mr-2 h-4 w-4" />
+                        Configure Drive
+                      </Link>
+                    </Button>
                   </div>
-                  <Button asChild>
-                    <Link href="/dashboard/settings/drive">
-                      <Cloud className="mr-2 h-4 w-4" />
-                      Configure Drive
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Set up OAuth credentials, connect your Google Drive account, and configure the target folder for track uploads. All .wav files will be uploaded to Google Drive and streamed directly from there.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Set up OAuth credentials, connect your Google Drive account, and configure the target folder for track uploads. All .wav files will be uploaded to Google Drive and streamed directly from there.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </>
         )}
       </Tabs>
     </div>
