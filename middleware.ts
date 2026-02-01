@@ -21,8 +21,8 @@ const routePermissions: Record<string, string[]> = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip middleware for non-dashboard routes
-  if (!pathname.startsWith('/dashboard')) {
+  // Skip middleware for non-dashboard routes and root path
+  if (!pathname.startsWith('/dashboard') || pathname === '/') {
     return NextResponse.next()
   }
 
@@ -96,14 +96,16 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
+     * Match only dashboard routes
+     * Exclude:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (public folder)
      * - api routes
      * - auth routes
+     * - root path
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api|auth).*)',
+    '/dashboard/:path*',
   ],
 }
