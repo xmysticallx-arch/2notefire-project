@@ -57,6 +57,8 @@ import {
   BarChart3,
   FileText,
   Bell,
+  Plus,
+  Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -96,6 +98,17 @@ export default function FeatureSettingsPage() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [editingFeature, setEditingFeature] = useState<FeatureSetting | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [newFeature, setNewFeature] = useState<Partial<FeatureSetting>>({
+    feature_key: '',
+    feature_name: '',
+    description: '',
+    enabled: true,
+    visible_to_roles: ['admin'],
+    sidebar_order: features.length + 1,
+    icon: 'Settings',
+    route: '/dashboard/',
+  })
 
   useEffect(() => {
     checkAdminAndFetch()
@@ -185,6 +198,49 @@ export default function FeatureSettingsPage() {
     setIsSaving(false)
   }
 
+  const createFeature = async () => {
+    if (!newFeature.feature_key || !newFeature.feature_name) return
+    
+    setIsSaving(true)
+    const supabase = createClient()
+    
+    const { data, error } = await supabase
+      .from('feature_settings')
+      .insert([newFeature])
+      .select()
+      .single()
+
+    if (!error && data) {
+      setFeatures(prev => [...prev, data])
+      setCreateDialogOpen(false)
+      setNewFeature({
+        feature_key: '',
+        feature_name: '',
+        description: '',
+        enabled: true,
+        visible_to_roles: ['admin'],
+        sidebar_order: features.length + 2,
+        icon: 'Settings',
+        route: '/dashboard/',
+      })
+    }
+    setIsSaving(false)
+  }
+
+  const deleteFeature = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this feature?')) return
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('feature_settings')
+      .delete()
+      .eq('id', id)
+
+    if (!error) {
+      setFeatures(prev => prev.filter(f => f.id !== id))
+    }
+  }
+
   const getIcon = (iconName: string | null) => {
     if (!iconName) return Settings
     return iconMap[iconName] || Settings
@@ -218,18 +274,106 @@ export default function FeatureSettingsPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/settings">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Feature Settings</h1>
-          <p className="text-muted-foreground">
-            Manage application features and sidebar visibility per role
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/dashboard/settings">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Feature Settings</h1>
+            <p className="text-muted-foreground">
+              Manage application features and sidebar visibility per role
+            </p>
+          </div>
         </div>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Feature
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Feature</DialogTitle>
+              <DialogDescription>
+                Add a new feature to the application
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new_feature_key">Feature Key</Label>
+                <Input
+                  id="new_feature_key"
+                  placeholder="e.g., reports"
+                  value={newFeature.feature_key}
+                  onChange={(e) => setNewFeature({...newFeature, feature_key: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_feature_name">Display Name</Label>
+                <Input
+                  id="new_feature_name"
+                  placeholder="e.g., Reports"
+                  value={newFeature.feature_name}
+                  onChange={(e) => setNewFeature({...newFeature, feature_name: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_description">Description</Label>
+                <Input
+                  id="new_description"
+                  placeholder="Feature description"
+                  value={newFeature.description}
+                  onChange={(e) => setNewFeature({...newFeature, description: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_route">Route</Label>
+                <Input
+                  id="new_route"
+                  placeholder="/dashboard/reports"
+                  value={newFeature.route}
+                  onChange={(e) => setNewFeature({...newFeature, route: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_icon">Icon</Label>
+                <Input
+                  id="new_icon"
+                  placeholder="Settings"
+                  value={newFeature.icon}
+                  onChange={(e) => setNewFeature({...newFeature, icon: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new_sidebar_order">Sidebar Order</Label>
+                <Input
+                  id="new_sidebar_order"
+                  type="number"
+                  min={1}
+                  value={newFeature.sidebar_order}
+                  onChange={(e) => setNewFeature({...newFeature, sidebar_order: parseInt(e.target.value) || 1})}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setCreateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={createFeature} disabled={isSaving || !newFeature.feature_key || !newFeature.feature_name}>
+                  {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Save className="mr-2 h-4 w-4" />
+                  Create Feature
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -253,7 +397,7 @@ export default function FeatureSettingsPage() {
                 <TableHead className="text-center">Admin</TableHead>
                 <TableHead className="text-center">User</TableHead>
                 <TableHead className="text-center">Artist</TableHead>
-                <TableHead className="w-12">Edit</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -299,16 +443,17 @@ export default function FeatureSettingsPage() {
                       </TableCell>
                     ))}
                     <TableCell>
-                      <Dialog open={editDialogOpen && editingFeature?.id === feature.id} onOpenChange={(open) => {
-                        setEditDialogOpen(open)
-                        if (open) setEditingFeature(feature)
-                        else setEditingFeature(null)
-                      }}>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
+                      <div className="flex items-center justify-end gap-1">
+                        <Dialog open={editDialogOpen && editingFeature?.id === feature.id} onOpenChange={(open) => {
+                          setEditDialogOpen(open)
+                          if (open) setEditingFeature(feature)
+                          else setEditingFeature(null)
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Edit Feature</DialogTitle>
@@ -373,6 +518,31 @@ export default function FeatureSettingsPage() {
                           )}
                         </DialogContent>
                       </Dialog>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Feature?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete the feature &quot;{feature.feature_name}&quot;. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteFeature(feature.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )

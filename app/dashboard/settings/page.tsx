@@ -35,7 +35,7 @@ export default function SettingsPage() {
     username: '',
     phone: '',
     language: 'en',
-    currency: 'USD',
+    currency: 'IDR',
   })
 
   const [notifications, setNotifications] = useState({
@@ -78,7 +78,7 @@ export default function SettingsPage() {
         username: profileData.username || '',
         phone: profileData.phone || '',
         language: profileData.language || 'en',
-        currency: profileData.currency || 'USD',
+        currency: profileData.currency || 'IDR',
       })
     }
     setIsLoading(false)
@@ -334,9 +334,10 @@ export default function SettingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="IDR">IDR (Rp)</SelectItem>
                       <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="EUR">EUR (€)</SelectItem>
+                      <SelectItem value="GBP">GBP (£)</SelectItem>
                       <SelectItem value="CAD">CAD ($)</SelectItem>
                     </SelectContent>
                   </Select>

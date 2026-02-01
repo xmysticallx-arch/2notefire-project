@@ -22,6 +22,7 @@ import {
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2, Disc3 } from 'lucide-react'
 import Link from 'next/link'
 import type { Release } from '@/lib/types'
+import { ReleasesActions } from './releases-actions'
 
 export default async function ReleasesPage() {
   const supabase = await createClient()
@@ -65,13 +66,17 @@ export default async function ReleasesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Releases</h1>
           <p className="text-muted-foreground">Manage albums, EPs, and singles</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/releases/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Release
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link href="/dashboard/releases/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Release
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      <ReleasesActions releases={releases || []} />
 
       <Card>
         <CardHeader>

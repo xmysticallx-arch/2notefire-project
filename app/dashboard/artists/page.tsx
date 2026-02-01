@@ -23,6 +23,7 @@ import {
 import { Plus, Search, MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Artist } from '@/lib/types'
+import { ArtistsActions } from './artists-actions'
 
 export default async function ArtistsPage() {
   const supabase = await createClient()
@@ -56,13 +57,17 @@ export default async function ArtistsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Artists</h1>
           <p className="text-muted-foreground">Manage your label&apos;s artist roster</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/artists/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Artist
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild>
+            <Link href="/dashboard/artists/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Artist
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      <ArtistsActions artists={artists || []} />
 
       <Card>
         <CardHeader>

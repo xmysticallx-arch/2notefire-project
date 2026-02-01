@@ -31,6 +31,7 @@ import {
   ArrowDownRight,
   Wallet,
   Download,
+  Upload,
   FileSpreadsheet,
   FileText,
   Printer,
@@ -62,6 +63,9 @@ export default function AccountingPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isExporting, setIsExporting] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importSuccess, setImportSuccess] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTransactions()
@@ -180,6 +184,98 @@ export default function AccountingPage() {
     }
   }
 
+  // Import from Excel/CSV
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    setImportError(null)
+    setImportSuccess(null)
+
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').filter(line => line.trim())
+      
+      if (lines.length < 2) {
+        throw new Error('File is empty or has no data rows')
+      }
+
+      // Parse CSV header
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+      
+      // Required columns
+      const requiredColumns = ['date', 'description', 'type', 'amount', 'category']
+      const missingColumns = requiredColumns.filter(col => !headers.some(h => h.includes(col)))
+      
+      if (missingColumns.length > 0) {
+        throw new Error(`Missing required columns: ${missingColumns.join(', ')}`)
+      }
+
+      // Find column indices
+      const dateIdx = headers.findIndex(h => h.includes('date'))
+      const descIdx = headers.findIndex(h => h.includes('description'))
+      const typeIdx = headers.findIndex(h => h.includes('type'))
+      const amountIdx = headers.findIndex(h => h.includes('amount'))
+      const categoryIdx = headers.findIndex(h => h.includes('category'))
+      const statusIdx = headers.findIndex(h => h.includes('status'))
+      const refIdx = headers.findIndex(h => h.includes('reference') || h.includes('ref'))
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) throw new Error('User not authenticated')
+
+      // Parse rows
+      const importedTransactions = []
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''))
+        
+        if (cols.length < requiredColumns.length) continue
+
+        const type = cols[typeIdx]?.toLowerCase()
+        if (!['income', 'expense'].includes(type)) continue
+
+        const amountStr = cols[amountIdx]?.replace(/[$,+\-\s]/g, '')
+        const amount = parseFloat(amountStr)
+        if (isNaN(amount) || amount <= 0) continue
+
+        importedTransactions.push({
+          type,
+          amount,
+          description: cols[descIdx] || 'Imported transaction',
+          category: cols[categoryIdx] || 'other',
+          status: statusIdx >= 0 ? cols[statusIdx]?.toLowerCase() || 'completed' : 'completed',
+          transaction_date: cols[dateIdx] || new Date().toISOString().split('T')[0],
+          reference_number: refIdx >= 0 ? cols[refIdx] : null,
+          created_by: user.id,
+        })
+      }
+
+      if (importedTransactions.length === 0) {
+        throw new Error('No valid transactions found in file')
+      }
+
+      // Insert into database
+      const { error, data } = await supabase
+        .from('transactions')
+        .insert(importedTransactions)
+        .select()
+
+      if (error) throw error
+
+      setImportSuccess(`Successfully imported ${importedTransactions.length} transactions`)
+      fetchTransactions()
+      
+      // Clear the file input
+      e.target.value = ''
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to import file')
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -196,6 +292,23 @@ export default function AccountingPage() {
           <p className="text-muted-foreground">Track income, expenses, and financial transactions</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" disabled={isImporting} asChild>
+            <label className="cursor-pointer">
+              {isImporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-2 h-4 w-4" />
+              )}
+              Import
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                className="hidden"
+                onChange={handleImportFile}
+                disabled={isImporting}
+              />
+            </label>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" disabled={isExporting}>
@@ -234,6 +347,18 @@ export default function AccountingPage() {
           </Button>
         </div>
       </div>
+
+      {/* Import Notifications */}
+      {importError && (
+        <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive border border-destructive/20">
+          <strong>Import Error:</strong> {importError}
+        </div>
+      )}
+      {importSuccess && (
+        <div className="rounded-lg bg-success/10 p-4 text-sm text-success border border-success/20">
+          <strong>Success:</strong> {importSuccess}
+        </div>
+      )}
 
       {/* Financial Summary */}
       <div className="grid gap-4 md:grid-cols-3">
