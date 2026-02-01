@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
-import { User, Bell, Shield, CreditCard, Users, Save, Camera, Loader2, Upload, Settings, Cloud } from 'lucide-react'
+import { User, Bell, Shield, Users, Save, Camera, Loader2, Upload, Settings, Cloud } from 'lucide-react'
 import type { Profile } from '@/lib/types'
 import Link from 'next/link'
 
@@ -217,11 +217,7 @@ export default function SettingsPage() {
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">Security</span>
           </TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2">
-            <CreditCard className="h-4 w-4" />
-            <span className="hidden sm:inline">Billing</span>
-          </TabsTrigger>
-{isAdmin && (
+          {isAdmin && (
             <>
               <TabsTrigger value="users" className="gap-2">
                 <Users className="h-4 w-4" />
@@ -456,77 +452,6 @@ export default function SettingsPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Billing Tab */}
-        <TabsContent value="billing" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Plan</CardTitle>
-              <CardDescription>Manage your subscription and billing</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">Pro Plan</h3>
-                    <Badge>Active</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">$49/month - Unlimited artists, releases, and analytics</p>
-                </div>
-                <Button variant="outline">Change Plan</Button>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h4 className="mb-4 font-medium">Billing History</h4>
-                <div className="space-y-2">
-                  {[
-                    { date: 'Jan 1, 2026', amount: '$49.00', status: 'Paid' },
-                    { date: 'Dec 1, 2025', amount: '$49.00', status: 'Paid' },
-                    { date: 'Nov 1, 2025', amount: '$49.00', status: 'Paid' },
-                  ].map((invoice, i) => (
-                    <div key={i} className="flex items-center justify-between rounded-md border px-4 py-3">
-                      <div>
-                        <p className="font-medium">{invoice.date}</p>
-                        <p className="text-sm text-muted-foreground">{invoice.amount}</p>
-                      </div>
-                      <Badge variant="secondary">{invoice.status}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div>
-                <h4 className="mb-4 font-medium">Cancel Subscription</h4>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  If you cancel, you will lose access to premium features at the end of your billing period.
-                </p>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Cancel Subscription</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Cancel your subscription?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Your subscription will remain active until the end of your current billing period. After that, you will lose access to premium features.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
-                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Yes, Cancel
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

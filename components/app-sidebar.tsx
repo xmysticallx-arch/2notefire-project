@@ -72,18 +72,18 @@ const mainNavItems: NavItem[] = [
 ]
 
 const financeNavItems: NavItem[] = [
-  { title: 'Accounting', icon: Calculator, href: '/dashboard/accounting', featureKey: 'accounting', roles: ['admin'] },
-  { title: 'Royalties', icon: DollarSign, href: '/dashboard/royalties', featureKey: 'royalties', roles: ['admin', 'artist'] },
+  { title: 'Accounting', icon: Calculator, href: '/dashboard/accounting', featureKey: 'accounting', roles: ['admin', 'finance'] },
+  { title: 'Royalties', icon: DollarSign, href: '/dashboard/royalties', featureKey: 'royalties', roles: ['admin', 'finance', 'artist'] },
 ]
 
 const managementNavItems: NavItem[] = [
-  { title: 'Analytics', icon: TrendingUp, href: '/dashboard/analytics', featureKey: 'analytics', roles: ['admin', 'user'] },
+  { title: 'Analytics', icon: TrendingUp, href: '/dashboard/analytics', featureKey: 'analytics', roles: ['admin', 'user', 'finance'] },
   { title: 'Contracts', icon: FileText, href: '/dashboard/contracts', featureKey: 'contracts', roles: ['admin'] },
 ]
 
 const systemNavItems: NavItem[] = [
-  { title: 'Notifications', icon: Bell, href: '/dashboard/notifications', featureKey: 'notifications', roles: ['admin', 'user', 'artist'] },
-  { title: 'Settings', icon: Settings, href: '/dashboard/settings', featureKey: 'settings', roles: ['admin', 'user', 'artist'] },
+  { title: 'Notifications', icon: Bell, href: '/dashboard/notifications', featureKey: 'notifications', roles: ['admin', 'user', 'artist', 'finance'] },
+  { title: 'Settings', icon: Settings, href: '/dashboard/settings', featureKey: 'settings', roles: ['admin', 'user', 'artist', 'finance'] },
 ]
 
 export function AppSidebar({ profile }: AppSidebarProps) {

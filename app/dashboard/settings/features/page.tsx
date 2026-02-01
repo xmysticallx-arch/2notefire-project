@@ -88,7 +88,7 @@ const iconMap: Record<string, React.ElementType> = {
   Settings,
 }
 
-const availableRoles = ['admin', 'user', 'artist']
+const availableRoles = ['admin', 'user', 'artist', 'finance']
 
 export default function FeatureSettingsPage() {
   const router = useRouter()
@@ -397,6 +397,7 @@ export default function FeatureSettingsPage() {
                 <TableHead className="text-center">Admin</TableHead>
                 <TableHead className="text-center">User</TableHead>
                 <TableHead className="text-center">Artist</TableHead>
+                <TableHead className="text-center">Finance</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

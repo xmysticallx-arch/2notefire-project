@@ -38,7 +38,7 @@ export default function UserManagementPage() {
     email: '',
     password: '',
     full_name: '',
-    role: 'user' as 'admin' | 'user' | 'artist',
+    role: 'user' as 'admin' | 'user' | 'artist' | 'finance',
     department: '',
   })
   const router = useRouter()
@@ -231,6 +231,7 @@ export default function UserManagementPage() {
     switch (role) {
       case 'admin': return 'default'
       case 'artist': return 'secondary'
+      case 'finance': return 'secondary'
       default: return 'outline'
     }
   }
@@ -383,7 +384,7 @@ export default function UserManagementPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="role">Role</Label>
-                        <Select value={newUser.role} onValueChange={(v: 'admin' | 'user' | 'artist') => setNewUser({ ...newUser, role: v })}>
+                        <Select value={newUser.role} onValueChange={(v: 'admin' | 'user' | 'artist' | 'finance') => setNewUser({ ...newUser, role: v })}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
@@ -391,6 +392,7 @@ export default function UserManagementPage() {
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="user">User</SelectItem>
                             <SelectItem value="artist">Artist</SelectItem>
+                            <SelectItem value="finance">Finance</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

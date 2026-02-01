@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'user' | 'artist'
+export type UserRole = 'admin' | 'user' | 'artist' | 'finance'
 export type Department = 'management' | 'ar' | 'marketing' | 'finance' | 'legal' | 'production' | 'distribution'
 export type ReleaseStatus = 'draft' | 'review' | 'approved' | 'published'
 export type TrackStatus = 'pending' | 'review' | 'approved' | 'rejected'
@@ -187,11 +187,49 @@ export interface Setting {
 
 export interface Permission {
   id: string
-  role: UserRole
+  name: string
   resource: string
   action: string
-  allowed: boolean
+  description?: string
   created_at: string
+}
+
+export interface RolePermission {
+  id: string
+  role: UserRole
+  permission_id: string
+  created_at: string
+}
+
+export interface UserPermission {
+  id: string
+  user_id: string
+  permission_id: string
+  granted: boolean
+  created_at: string
+}
+
+export interface FeatureSetting {
+  id: string
+  feature_key: string
+  feature_name: string
+  description?: string
+  enabled: boolean
+  visible_to_roles: UserRole[]
+  sidebar_order: number
+  icon?: string
+  route?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface UserFeatureSetting {
+  id: string
+  user_id: string
+  feature_key: string
+  enabled: boolean
+  created_at: string
+  updated_at: string
 }
 
 // Dashboard stats types
