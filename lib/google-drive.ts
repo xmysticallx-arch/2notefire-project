@@ -297,6 +297,103 @@ export function getStreamingUrl(fileId: string): string {
   return `https://drive.google.com/uc?export=download&id=${fileId}`
 }
 
+// Sanitize folder name for Google Drive
+export function sanitizeFolderName(name: string): string {
+  // Remove or replace characters that are problematic for Drive folders
+  return name
+    .replace(/[<>:"/\\|?*]/g, '')
+    .replace(/\s+/g, '_')
+    .trim()
+    .substring(0, 100)
+}
+
+// Create artist folder in Google Drive
+export async function createArtistFolder(
+  artistName: string,
+  artistId: string,
+  parentFolderId?: string
+): Promise<{ folderId: string; folderName: string } | null> {
+  const drive = await getDriveClient()
+  if (!drive) {
+    throw new Error('Google Drive not configured')
+  }
+
+  const config = await getDriveConfig()
+  const targetParentId = parentFolderId || config?.folderId
+
+  // Create unique folder name: SanitizedArtistName_ArtistID
+  const sanitizedName = sanitizeFolderName(artistName)
+  const folderName = `${sanitizedName}_${artistId.substring(0, 8)}`
+
+  try {
+    // Check if folder already exists
+    const existingQuery = targetParentId
+      ? `name = '${folderName}' and '${targetParentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+      : `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+
+    const existing = await drive.files.list({
+      q: existingQuery,
+      fields: 'files(id, name)',
+    })
+
+    if (existing.data.files && existing.data.files.length > 0) {
+      return {
+        folderId: existing.data.files[0].id!,
+        folderName: existing.data.files[0].name!,
+      }
+    }
+
+    // Create new folder
+    const response = await drive.files.create({
+      requestBody: {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: targetParentId ? [targetParentId] : undefined,
+      },
+      fields: 'id, name',
+    })
+
+    return {
+      folderId: response.data.id!,
+      folderName: response.data.name!,
+    }
+  } catch (error) {
+    console.error('Failed to create artist folder:', error)
+    throw error
+  }
+}
+
+// Get or create artist folder
+export async function getOrCreateArtistFolder(
+  artistId: string,
+  artistName: string,
+  existingFolderId?: string | null
+): Promise<{ folderId: string; folderName: string } | null> {
+  // If artist already has a folder ID, verify it exists
+  if (existingFolderId) {
+    const drive = await getDriveClient()
+    if (drive) {
+      try {
+        const folder = await drive.files.get({
+          fileId: existingFolderId,
+          fields: 'id, name, trashed',
+        })
+        if (folder.data && !folder.data.trashed) {
+          return {
+            folderId: folder.data.id!,
+            folderName: folder.data.name!,
+          }
+        }
+      } catch {
+        // Folder doesn't exist or is inaccessible, create new one
+      }
+    }
+  }
+
+  // Create new folder
+  return await createArtistFolder(artistName, artistId)
+}
+
 // Verify Drive connection
 export async function verifyDriveConnection(): Promise<{
   connected: boolean

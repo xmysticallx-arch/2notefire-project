@@ -107,20 +107,30 @@ export default function NewTrackPage() {
     }
   }
 
-  const uploadToGoogleDrive = async (file: File): Promise<{ fileId: string; webViewLink: string } | null> => {
+  const uploadToGoogleDrive = async (file: File, artistId?: string): Promise<{ fileId: string; webViewLink: string; streamingUrl?: string } | null> => {
     setUploading(true)
     setUploadProgress(0)
 
     try {
       // Upload to our API endpoint which handles Google Drive upload
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('fileName', file.name)
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', file)
+      uploadFormData.append('fileName', file.name)
+      if (artistId) {
+        uploadFormData.append('artistId', artistId)
+      }
+
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90))
+      }, 500)
 
       const response = await fetch('/api/upload/google-drive', {
         method: 'POST',
-        body: formData,
+        body: uploadFormData,
       })
+
+      clearInterval(progressInterval)
 
       if (!response.ok) {
         const error = await response.json()
@@ -129,7 +139,11 @@ export default function NewTrackPage() {
 
       const data = await response.json()
       setUploadProgress(100)
-      return data
+      return {
+        fileId: data.fileId,
+        webViewLink: data.streamingUrl || data.webContentLink,
+        streamingUrl: data.streamingUrl,
+      }
     } catch (error) {
       console.error('Google Drive upload error:', error)
       // Fallback: Save to Supabase Storage if Google Drive fails
@@ -175,7 +189,7 @@ export default function NewTrackPage() {
 
       // Upload audio file if selected
       if (audioFile) {
-        audioFileData = await uploadToGoogleDrive(audioFile)
+        audioFileData = await uploadToGoogleDrive(audioFile, formData.artist_id || undefined)
         if (!audioFileData) {
           setLoading(false)
           return

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -41,6 +41,7 @@ interface DriveStatus {
 
 export default function DriveSettingsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -59,7 +60,26 @@ export default function DriveSettingsPage() {
 
   useEffect(() => {
     checkAdminAndLoadConfig()
-  }, [])
+    
+    // Handle OAuth callback params
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+    
+    if (success === 'connected') {
+      setMessage({ type: 'success', text: 'Google Drive connected successfully!' })
+      // Clear URL params
+      router.replace('/dashboard/settings/drive')
+    } else if (error) {
+      const errorMessages: Record<string, string> = {
+        no_code: 'Authorization code not received',
+        missing_config: 'OAuth configuration is incomplete',
+        no_refresh_token: 'No refresh token received. Please disconnect and reconnect.',
+        token_exchange_failed: 'Failed to exchange authorization code',
+      }
+      setMessage({ type: 'error', text: errorMessages[error] || `OAuth error: ${error}` })
+      router.replace('/dashboard/settings/drive')
+    }
+  }, [searchParams, router])
 
   const checkAdminAndLoadConfig = async () => {
     setIsLoading(true)
@@ -283,6 +303,10 @@ export default function DriveSettingsPage() {
                 <Button variant="outline" onClick={checkDriveConnection}>
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh Status
+                </Button>
+                <Button variant="outline" onClick={handleConnectDrive}>
+                  <Link2 className="mr-2 h-4 w-4" />
+                  Switch Account
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
