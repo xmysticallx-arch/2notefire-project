@@ -106,7 +106,7 @@ export async function getDriveClient(): Promise<drive_v3.Drive | null> {
 }
 
 // Get OAuth URL for connecting Google Drive account
-export function getOAuthUrl(clientId: string, redirectUri: string, state?: string): string {
+export async function getOAuthUrl(clientId: string, redirectUri: string, state?: string): Promise<string> {
   const oauth2Client = new google.auth.OAuth2(clientId, '', redirectUri)
   
   return oauth2Client.generateAuthUrl({
@@ -293,12 +293,12 @@ export async function listDriveFiles(
 }
 
 // Get streaming URL for audio file
-export function getStreamingUrl(fileId: string): string {
+export async function getStreamingUrl(fileId: string): Promise<string> {
   return `https://drive.google.com/uc?export=download&id=${fileId}`
 }
 
 // Sanitize folder name for Google Drive
-export function sanitizeFolderName(name: string): string {
+export async function sanitizeFolderName(name: string): Promise<string> {
   // Remove or replace characters that are problematic for Drive folders
   return name
     .replace(/[<>:"/\\|?*]/g, '')
@@ -322,7 +322,7 @@ export async function createArtistFolder(
   const targetParentId = parentFolderId || config?.folderId
 
   // Create unique folder name: SanitizedArtistName_ArtistID
-  const sanitizedName = sanitizeFolderName(artistName)
+  const sanitizedName = await sanitizeFolderName(artistName)
   const folderName = `${sanitizedName}_${artistId.substring(0, 8)}`
 
   try {

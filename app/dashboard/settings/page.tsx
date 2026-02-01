@@ -532,7 +532,6 @@ export default function SettingsPage() {
 
         {isAdmin && (
           <>
-            {/* Users Tab (Admin Only) */}
             <TabsContent value="users" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -557,7 +556,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* Features Tab (Admin Only) */}
             <TabsContent value="features" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -582,7 +580,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
 
-            {/* Google Drive Tab (Admin Only) */}
             <TabsContent value="drive" className="space-y-4">
               <Card>
                 <CardHeader>

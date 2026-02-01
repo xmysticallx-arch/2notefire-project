@@ -132,12 +132,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get streaming URL
+    const streamingUrl = await getStreamingUrl(result.fileId)
+
     // If trackId provided, update the track with Drive metadata
     if (trackId) {
       await supabase
         .from('tracks')
         .update({
-          audio_url: getStreamingUrl(result.fileId),
+          audio_url: streamingUrl,
           audio_file_url: result.webContentLink,
           audio_file_id: result.fileId,
           drive_file_id: result.fileId,
@@ -162,7 +165,7 @@ export async function POST(request: NextRequest) {
       mimeType: result.mimeType,
       webViewLink: result.webViewLink,
       webContentLink: result.webContentLink,
-      streamingUrl: getStreamingUrl(result.fileId),
+      streamingUrl,
       artistFolder: artistFolderData ? {
         folderId: artistFolderData.folderId,
         folderName: artistFolderData.folderName,
